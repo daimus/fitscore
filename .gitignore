@@ -1,0 +1,18 @@
+# compiled output
+/dist
+/tmp
+/out
+
+# dependencies
+/node_modules
+
+# IDEs
+.idea
+.vscode
+
+# misc
+.DS_Store
+npm-debug.log
+
+.env
+/db/drizzle
