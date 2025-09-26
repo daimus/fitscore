@@ -2,7 +2,11 @@
   "name": "hono-bun",
   "scripts": {
     "dev": "bun run --hot src/index.ts",
-    "build": "bun build src/index.ts --minify --sourcemap --outdir=dist --target=bun"
+    "build": "bun build src/index.ts --minify --sourcemap --outdir=dist --target=bun",
+    "db:generate": "drizzle-kit generate --dialect=postgresql --schema=./db/schema.ts --out=./db/drizzle",
+    "db:migrate": "bun ./db/migrate.js",
+    "db:seed": "bun db/seed.js",
+    "db:push": "drizzle-kit push"
   },
   "dependencies": {
     "@hono/node-server": "^1.12.0",
@@ -16,10 +20,14 @@
     "tslib": "^2.6.3",
     "typedi": "^0.10.0",
     "winston": "^3.13.1",
-    "zod": "^3.24.2"
+    "zod": "^3.24.2",
+    "drizzle-orm": "0.44.2",
+    "pg": "^8.13.1"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/pg": "^8.11.10",
+    "drizzle-kit": "0.31.4"
   },
   "packageManager": "yarn@1.22.21+sha1.1959a18351b811cdeedbd484a8f86c3cc3bbaf72"
 }
