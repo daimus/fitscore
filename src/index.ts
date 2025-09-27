@@ -1,3 +1,4 @@
+import 'reflect-metadata';
 import { Hono } from 'hono'
 import loaders from "@/loaders";
 import { Variables } from "@/types/hono";
