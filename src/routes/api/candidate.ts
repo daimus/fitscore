@@ -8,6 +8,7 @@ import FileService from "@/services/file";
 import { zValidator } from "@hono/zod-validator";
 import { z } from "zod";
 import { catchZod } from "@/tools/validator";
+import CandidateService from "@/services/candidate";
 
 const route = new Hono<{ Variables: Variables }>();
 
@@ -35,11 +36,13 @@ route.post('/upload',
         const fileServiceInstance = Container.get(FileService);
         const { cv, projectReport } = c.req.valid('form');
         const requestId = c.get('requestId');
-        const result = await Promise.all([
+        const documents = await Promise.all([
             fileServiceInstance.Upload(cv, `${requestId}_cv`),
             fileServiceInstance.Upload(projectReport, `${requestId}_project-report`)
         ]);
-        // TODO: extract uploaded file
+        const result = await fileServiceInstance.ExtractDocument(documents);
+        const candidateServiceInstance = Container.get(CandidateService);
+        await candidateServiceInstance.CreateCandidate(requestId, result);
         c.set('data', result);
         c.status(200);
         c.set('message', 'Successfully upload docs')
