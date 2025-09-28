@@ -2,8 +2,10 @@ import { Container } from "typedi";
 import Bull from "bull";
 import Logger from "@/loaders/logger";
 import config from "@/config";
+import FileService from "@/services/file";
+import CandidateService from "@/services/candidate";
 
-const JOB_NAME = "evaluate-job";
+const JOB_NAME = "extract-document-job";
 export default function () {
     const job = new Bull(JOB_NAME, {
         redis: {
@@ -15,7 +17,7 @@ export default function () {
         }
     });
 
-    Container.set("EvaluateJob", job);
+    Container.set("ExtractDocumentJob", job);
     Logger.info("✅ JOB %s Loaded!", JOB_NAME)
     job.process(handler);
     job.on('error', function (error) {
@@ -91,6 +93,14 @@ export default function () {
 
 async function handler(job, done) {
     Logger.info("JOB %s : %s > running", JOB_NAME, job.id);
-    // TODO: process job here
-    done();
+    try {
+        const fileServiceInstance = Container.get(FileService);
+        const candidateServiceInstance = Container.get(CandidateService);
+        const result = await fileServiceInstance.ExtractDocument(job.data.documents);
+        await candidateServiceInstance.CreateCandidate(job.data.candidateId, result);
+        done(null)
+    } catch (error) {
+        Logger.info("JOB %s : %s > error : %j", JOB_NAME, job.id, error);
+        done(error);
+    }
 }

@@ -7,12 +7,14 @@ import * as Path from "path";
 import node_modules from "node_modules-path";
 import { BullAdapter } from "@bull-board/api/bullAdapter"
 import evaluateJob from "@/jobs/evaluate-job";
+import extractDocumentJob from "@/jobs/extract-document-job";
 
 export default async function (app: Hono<{ Variables: Variables }>) {
     const serverAdapter = new HonoAdapter(serveStatic);
     createBullBoard({
         queues: [
             new BullAdapter(evaluateJob()),
+            new BullAdapter(extractDocumentJob())
         ],
         serverAdapter: serverAdapter,
         options: {

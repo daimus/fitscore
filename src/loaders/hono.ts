@@ -6,6 +6,7 @@ import Logger from "@/loaders/logger";
 import { HTTPException } from "hono/http-exception";
 import { isEmpty } from "@/tools/validator";
 import { cors } from 'hono/cors';
+import routes from "@/routes";
 
 
 export default (app: Hono<{ Variables: Variables }>) => {
@@ -37,7 +38,7 @@ export default (app: Hono<{ Variables: Variables }>) => {
         await next()
     })
 
-
+    routes(app);
 
     // Health Check
     app.get('/', (c) => c.text('ok'));
@@ -57,8 +58,8 @@ export default (app: Hono<{ Variables: Variables }>) => {
     // Error Handler
     app.onError((err: HTTPException, c) => {
         const requestId = c.get('requestId');
-        Logger.info("%s %s", requestId, c.req.method, c.req.path);
-        Logger.error("ERROR %s", requestId, err.message);
+        Logger.error("%s - %s", c.req.method, c.req.path);
+        Logger.error("ERROR %s", err.message);
         return c.json({
             meta: {
                 requestId: requestId,

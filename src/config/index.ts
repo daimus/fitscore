@@ -34,4 +34,11 @@ export default {
         username: env.REDIS_USERNAME,
         password: env.REDIS_PASSWORD
     },
+    file: {
+        sizeLimit: 4096 * 1024,
+        acceptedMimeTypes: {
+            document: ["text/plain", "application/pdf", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"]
+        },
+        uploadPath: '/tmp/docs'
+    }
 }

@@ -15,3 +15,22 @@ export const isEmpty = (value) => {
 
     return false;
 }
+
+const formatZodResult = (result, c) => {
+    return {
+        meta: {
+            requestId: c.get('requestId'),
+            ok: false,
+            message: "Bad Request",
+            timestamp: Date.now(),
+            path: c.req.path,
+            errors: result.error.issues
+        }
+    }
+}
+
+export const catchZod = (result, c) => {
+    if (!result.success) {
+        return c.json(formatZodResult(result, c), 400)
+    }
+}
