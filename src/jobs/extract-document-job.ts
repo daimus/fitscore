@@ -4,6 +4,9 @@ import Logger from "@/loaders/logger";
 import config from "@/config";
 import FileService from "@/services/file";
 import CandidateService from "@/services/candidate";
+import { searchJobFlow } from "@/services/genkit/flow/search-job";
+import { PgDatabase } from "drizzle-orm/pg-core";
+import { matchingTable } from "$/schema";
 
 const JOB_NAME = "extract-document-job";
 export default function () {
@@ -97,7 +100,26 @@ async function handler(job, done) {
         const fileServiceInstance = Container.get(FileService);
         const candidateServiceInstance = Container.get(CandidateService);
         const result = await fileServiceInstance.ExtractDocument(job.data.documents);
-        await candidateServiceInstance.CreateCandidate(job.data.candidateId, result);
+        const candidate = await candidateServiceInstance.CreateCandidate(job.data.candidateId, result);
+        // Search Job
+        const { jobs, error } = await searchJobFlow({ candidate });
+        if (!!error) {
+            Logger.info("JOB %s : %s > error : %j", JOB_NAME, job.id, error);
+            return done(error);
+        }
+        if (jobs.length <= 0) {
+            Logger.warn("JOB %s : %s > no job found", JOB_NAME, job.id);
+            return done(null);
+        }
+        const db: PgDatabase<any> = Container.get("db");
+        const matchingData = jobs.map(job => {
+            return {
+                jobId: job.id,
+                candidateId: candidate.id
+            }
+        });
+        Logger.info("JOB %s : %s > jobs match : %j", JOB_NAME, job.id, matchingData);
+        await db.insert(matchingTable).values(matchingData);
         done(null)
     } catch (error) {
         Logger.info("JOB %s : %s > error : %j", JOB_NAME, job.id, error);
