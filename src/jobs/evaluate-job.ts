@@ -2,6 +2,10 @@ import { Container } from "typedi";
 import Bull from "bull";
 import Logger from "@/loaders/logger";
 import config from "@/config";
+import CandidateService from "@/services/candidate";
+import { jobTable, matchingResultTable, matchingTable } from "$/schema";
+import { eq } from "drizzle-orm";
+import { scoringFlow } from "@/services/genkit/flow/scoring";
 
 const JOB_NAME = "evaluate-job";
 export default function () {
@@ -91,6 +95,42 @@ export default function () {
 
 async function handler(job, done) {
     Logger.info("JOB %s : %s > running", JOB_NAME, job.id);
-    // TODO: process job here
-    done();
+    try {
+        const db: any = Container.get("db");
+        const candidateServiceInstance = Container.get(CandidateService);
+        await db.update(matchingTable).set({ status: 'processing' }).where(eq(matchingTable.id, job.data.id))
+        const [jobPosting, candidate] = await Promise.all([
+            db.query.jobTable.findFirst({
+                columns: {
+                    id: true,
+                    title: true,
+                    description: true
+                },
+                where: eq(jobTable.id, job.data.jobId)
+            }),
+            candidateServiceInstance.GetCandidate(job.data.candidateId)
+        ]);
+        const { result, error } = await scoringFlow({
+            job: jobPosting,
+            candidate: candidate
+        });
+        if (!!error) {
+            Logger.info("JOB %s : %s > error : %j", JOB_NAME, job.id, error);
+            await db.update(matchingTable).set({ status: 'error' }).where(eq(matchingTable.id, job.data.id))
+            return done(error);
+        }
+        await db.update(matchingTable).set({ status: 'completed' }).where(eq(matchingTable.id, job.data.id));
+        await db.insert(matchingResultTable).values({
+            matchingId: job.data.id,
+            cvMatchRate: result.cvMatchRate,
+            cvFeedback: result.cvFeedback,
+            projectScore: result.projectScore,
+            projectFeedback: result.projectFeedback,
+            overallSummary: result.overallSummary,
+        })
+        done();
+    } catch (error) {
+        Logger.info("JOB %s : %s > error : %j", JOB_NAME, job.id, error);
+        done(error);
+    }
 }

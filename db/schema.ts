@@ -1,4 +1,5 @@
 import { relations, sql } from "drizzle-orm";
+import { numeric } from "drizzle-orm/pg-core";
 import { pgEnum, vector } from "drizzle-orm/pg-core";
 import { date } from "drizzle-orm/pg-core";
 import { pgTable, uuid, text, varchar, timestamp, json } from "drizzle-orm/pg-core";
@@ -72,6 +73,19 @@ export const rubricTable = pgTable('rubrics', {
     parameter: varchar('parameter').notNull(),
     description: varchar('description').notNull(),
     embedding: vector('embedding', { dimensions: 768 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at'),
+});
+
+export const matchingResultTable = pgTable('matching_results', {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    matchingId: uuid('matching_id').notNull(),
+    cvMatchRate: numeric('cv_match_rate'),
+    cvFeedback: varchar('cv_feedback'),
+    projectScore: numeric('project_score'),
+    projectFeedback: varchar('project_feedback'),
+    overallSummary: varchar('overall_summary'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     deletedAt: timestamp('deleted_at'),
