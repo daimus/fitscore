@@ -1,5 +1,5 @@
 import { relations, sql } from "drizzle-orm";
-import { vector } from "drizzle-orm/pg-core";
+import { pgEnum, vector } from "drizzle-orm/pg-core";
 import { date } from "drizzle-orm/pg-core";
 import { pgTable, uuid, text, varchar, timestamp, json } from "drizzle-orm/pg-core";
 
@@ -48,6 +48,18 @@ export const jobTable = pgTable('jobs', {
     title: varchar('title').notNull(),
     description: text('description').notNull(),
     embedding: vector('embedding', { dimensions: 768 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at'),
+});
+
+export const matchingStatus = pgEnum('matchingStatus', ["created", "queued", "processing", "completed", "error"]);
+export const matchingTable = pgTable('matchings', {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    jobId: uuid('job_id').notNull(),
+    candidateId: uuid('candidate_id').notNull(),
+    status: matchingStatus('status').notNull().default('created'),
+    finishedAt: timestamp('finished_at').notNull().defaultNow(),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     deletedAt: timestamp('deleted_at'),
