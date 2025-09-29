@@ -81,9 +81,9 @@ export const rubricTable = pgTable('rubrics', {
 export const matchingResultTable = pgTable('matching_results', {
     id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
     matchingId: uuid('matching_id').notNull(),
-    cvMatchRate: numeric('cv_match_rate'),
+    cvMatchRate: numeric('cv_match_rate', { mode: "number" }),
     cvFeedback: varchar('cv_feedback'),
-    projectScore: numeric('project_score'),
+    projectScore: numeric('project_score', { mode: "number" }),
     projectFeedback: varchar('project_feedback'),
     overallSummary: varchar('overall_summary'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
