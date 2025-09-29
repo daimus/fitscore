@@ -1,19 +1,41 @@
 const { config } = require("dotenv");
 import { Pool } from "pg";
 import { drizzle } from 'drizzle-orm/node-postgres';
-const { jobTable } = require("./schema");
+const { jobTable, rubricTable } = require("./schema");
 const { embed } = require("../src/services/genkit/tool/embed");
 
 config({ path: '.env' });
 
-async function seed() {
+async function seed(arg) {
     const pool = new Pool({
         connectionString: process.env.DATABASE_URI,
     });
     const db = drizzle({ client: pool }, { logger: true });
 
+    if (!arg) {
+        console.log("Usage db:seed <arg>")
+        return;
+    }
+
+    console.log('Seeding %s', arg);
+    switch (arg) {
+        case 'all':
+            seedJob(db);
+            seedRubric(db);
+            break;
+        case 'job':
+            seedJob(db);
+            break;
+        case 'rubric':
+            seedRubric(db);
+            break;
+    }
+}
+
+async function seedJob(db) {
+    const title = `Product Engineer (Backend) 2025`;
     const initalJobData = {
-        title: `Product Engineer (Backend) 2025`,
+        title: title,
         description: `About the Job
 You'll be building new product features alongside a frontend engineer and product manager using our Agile methodology,
 as well as addressing issues to ensure our apps are robust and our codebase is clean. As a Product Engineer, you'll write
@@ -73,9 +95,68 @@ zone overlap with our current team and maintain well communication, we're only l
     initalJobData.embedding = embeddings[0].embedding
     await db.insert(jobTable).values(initalJobData);
 }
+
+async function seedRubric(db) {
+    const initialRubrics = [
+        {
+            type: "cv",
+            parameter: "Technical Skills Match",
+            description: "Alignment with job requirements (backend, databases, APIs, cloud, AI/LLM)."
+        },
+        {
+            type: "cv",
+            parameter: "Experience Level",
+            description: "Years of experience and project complexity. "
+        },
+        {
+            type: "cv",
+            parameter: "Relevant Achievements",
+            description: "Impact of past work (scaling, performance, adoption)."
+        },
+        {
+            type: "cv",
+            parameter: "Cultural / Collaboration Fit",
+            description: "Communication, learning mindset, teamwork/leadership."
+        },
+        {
+            type: "project",
+            parameter: "Correctness (Prompt & Chaining)",
+            description: "Implements prompt design, LLM chaining, RAG context injection."
+        },
+        {
+            type: "project",
+            parameter: "Code Quality & Structure",
+            description: "Clean, modular, reusable, tested. "
+        },
+        {
+            type: "project",
+            parameter: "Resilience & Error Handling",
+            description: "Handles long jobs, retries, randomness, API failures."
+        },
+        {
+            type: "project",
+            parameter: "Documentation & Explanation",
+            description: "README clarity, setup instructions, trade-off explanations."
+        },
+        {
+            type: "project",
+            parameter: "Creativity / Bonus",
+            description: "Extra features beyond requirements."
+        },
+    ];
+    await Promise.all(initialRubrics.map(async rubric => {
+        const embedding = await embed(rubric.description);
+        rubric.embedding = embedding[0].embedding;
+    }));
+
+
+    await db.insert(rubricTable).values(initialRubrics);
+}
+
 async function main() {
     try {
-        seed();
+        const arg = process.argv[2];
+        seed(arg);
         console.log('Seeding completed');
     } catch (error) {
         console.error('Error during seeding:', error);

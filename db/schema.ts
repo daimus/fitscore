@@ -1,4 +1,5 @@
 import { relations, sql } from "drizzle-orm";
+import { numeric } from "drizzle-orm/pg-core";
 import { pgEnum, vector } from "drizzle-orm/pg-core";
 import { date } from "drizzle-orm/pg-core";
 import { pgTable, uuid, text, varchar, timestamp, json } from "drizzle-orm/pg-core";
@@ -59,7 +60,32 @@ export const matchingTable = pgTable('matchings', {
     jobId: uuid('job_id').notNull(),
     candidateId: uuid('candidate_id').notNull(),
     status: matchingStatus('status').notNull().default('created'),
-    finishedAt: timestamp('finished_at').notNull().defaultNow(),
+    finishedAt: timestamp('finished_at'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at'),
+});
+
+export const rubricType = pgEnum('rubricType', ["cv", "project"]);
+export const rubricTable = pgTable('rubrics', {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    type: rubricType('type').notNull(),
+    parameter: varchar('parameter').notNull(),
+    description: varchar('description').notNull(),
+    embedding: vector('embedding', { dimensions: 768 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at'),
+});
+
+export const matchingResultTable = pgTable('matching_results', {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    matchingId: uuid('matching_id').notNull(),
+    cvMatchRate: numeric('cv_match_rate', { mode: "number" }),
+    cvFeedback: varchar('cv_feedback'),
+    projectScore: numeric('project_score', { mode: "number" }),
+    projectFeedback: varchar('project_feedback'),
+    overallSummary: varchar('overall_summary'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     deletedAt: timestamp('deleted_at'),
@@ -85,4 +111,18 @@ export const projectsToCandidateRelation = relations(projectTable, ({ one }) => 
 
 export const candidateToProjectsRelation = relations(candidateTable, ({ many }) => ({
     projects: many(projectTable),
+}));
+
+export const matchingResultToMatchingRelation = relations(matchingResultTable, ({ one }) => ({
+    matching: one(matchingTable, {
+        fields: [matchingResultTable.matchingId],
+        references: [matchingTable.id],
+    }),
+}));
+
+export const matchingToResultRelation = relations(matchingTable, ({ one }) => ({
+    result: one(matchingResultTable, {
+        fields: [matchingTable.id],
+        references: [matchingResultTable.matchingId],
+    }),
 }));
