@@ -65,6 +65,18 @@ export const matchingTable = pgTable('matchings', {
     deletedAt: timestamp('deleted_at'),
 });
 
+export const rubricType = pgEnum('rubricType', ["cv", "project"]);
+export const rubricTable = pgTable('rubrics', {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    type: rubricType('type').notNull(),
+    parameter: varchar('parameter').notNull(),
+    description: varchar('description').notNull(),
+    embedding: vector('embedding', { dimensions: 768 }),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at'),
+});
+
 export const experiencesToCandidateRelation = relations(experienceTable, ({ one }) => ({
     candidate: one(candidateTable, {
         fields: [experienceTable.candidateId],
