@@ -59,7 +59,7 @@ export const matchingTable = pgTable('matchings', {
     jobId: uuid('job_id').notNull(),
     candidateId: uuid('candidate_id').notNull(),
     status: matchingStatus('status').notNull().default('created'),
-    finishedAt: timestamp('finished_at').notNull().defaultNow(),
+    finishedAt: timestamp('finished_at'),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
     deletedAt: timestamp('deleted_at'),
