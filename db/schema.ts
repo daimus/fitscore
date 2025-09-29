@@ -112,3 +112,17 @@ export const projectsToCandidateRelation = relations(projectTable, ({ one }) => 
 export const candidateToProjectsRelation = relations(candidateTable, ({ many }) => ({
     projects: many(projectTable),
 }));
+
+export const matchingResultToMatchingRelation = relations(matchingResultTable, ({ one }) => ({
+    matching: one(matchingTable, {
+        fields: [matchingResultTable.matchingId],
+        references: [matchingTable.id],
+    }),
+}));
+
+export const matchingToResultRelation = relations(matchingTable, ({ one }) => ({
+    result: one(matchingResultTable, {
+        fields: [matchingTable.id],
+        references: [matchingResultTable.matchingId],
+    }),
+}));

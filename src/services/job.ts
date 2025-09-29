@@ -13,7 +13,7 @@ export default class JobService {
     ) { }
 
     public async Evaluate() {
-        this.logger.info("SVC JobService/Evaluate %s");
+        this.logger.info("SVC JobService/Evaluate");
         const matchings = await this.db
             .select({
                 id: matchingTable.id,
@@ -40,5 +40,19 @@ export default class JobService {
                 id: matchingTable.id,
                 status: matchingTable.status
             })
+    }
+
+    public async GetEvaluation(id: string) {
+        this.logger.info("SVC JobService/Evaluate > %s", id);
+        return await this.db.query.matchingTable.findFirst({
+            columns: {
+                id: true,
+                status: true
+            },
+            with: {
+                result: true
+            },
+            where: eq(matchingTable.id, id)
+        })
     }
 }
