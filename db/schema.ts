@@ -47,7 +47,24 @@ export const projectTable = pgTable('projects', {
 export const jobTable = pgTable('jobs', {
     id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
     title: varchar('title').notNull(),
-    description: text('description').notNull(),
+    intro: text('intro').notNull(),
+    work: text('work'),
+    skills: text('skills'),
+    qualification: text('qualification'),
+    culture: text('culture'),
+    other: text('other'),
+    createdAt: timestamp('created_at').notNull().defaultNow(),
+    updatedAt: timestamp('updated_at').notNull().defaultNow(),
+    deletedAt: timestamp('deleted_at'),
+});
+
+export const jobSection = pgEnum('jobSection', ["title", "intro", "work", "skills", "qualification", "culture", "other"]);
+export const jobEmbeddingTable = pgTable('job_embeddings', {
+    id: uuid('id').primaryKey().default(sql`gen_random_uuid()`),
+    jobId: uuid('job_id').notNull(),
+    chunkIndex: numeric('chunk_index', { mode: "number" }).notNull(),
+    section: jobSection('section').notNull(),
+    content: text('content').notNull(),
     embedding: vector('embedding', { dimensions: 768 }),
     createdAt: timestamp('created_at').notNull().defaultNow(),
     updatedAt: timestamp('updated_at').notNull().defaultNow(),
